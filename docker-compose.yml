@@ -1,23 +1,8 @@
 version: '3'
 
 services:
-  # reverse_proxy:
-  #   container_name: nginx
-  app:
-    container_name: app
-    image: brito/node-app:latest
-    build: 
-      context: nodejs
-    entrypoint: dockerize -wait tcp://db:3306 -timeout 20s docker-entrypoint.sh node index.js
-    networks:
-    - challenge-network  
-    tty: true
-    depends_on:
-      - db
-
   db:
     build: ./mysql
-    stdin_open: true
     command: --innodb-use-native-aio=0
     container_name: db
     image: brito/app-db-mysql:latest
@@ -30,6 +15,30 @@ services:
       - MYSQL_ROOT_PASSWORD=root
     networks:
       - challenge-network
+  
+  app:
+    container_name: app
+    image: brito/node-app:latest
+    build: 
+      context: nodejs
+    entrypoint: dockerize -wait tcp://db:3306 -timeout 20s docker-entrypoint.sh node index.js
+    networks:
+    - challenge-network  
+    tty: true
+    depends_on:
+      - db
+
+  reverse_proxy:
+      build: 
+        context: ./nginx
+      container_name: nginx
+      tty: true
+      depends_on:
+      - app
+      ports:
+        - 8080:80
+      networks:
+        - challenge-network
 
 networks:
   challenge-network:
