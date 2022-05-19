@@ -3,30 +3,28 @@ version: '3'
 services:
   # reverse_proxy:
   #   container_name: nginx
-  # app:
-  #   container_name: app
-  #   build: 
-  #     context: node
-  #   entrypoint: dockerize -wait tcp://db:3306 -timeout 20s docker-entrypoint.sh
-  #   networks:
-  #   - node-network
-  #   volumes:
-  #     - ./node:/usr/src/app
-  #   tty: true
-  #   ports:
-  #     - "3000:3000"
-  #   depends_on:
-  #     - db
+  app:
+    container_name: app
+    image: brito/node-app:latest
+    build: 
+      context: nodejs
+    entrypoint: dockerize -wait tcp://db:3306 -timeout 20s docker-entrypoint.sh node index.js
+    networks:
+    - challenge-network  
+    tty: true
+    depends_on:
+      - db
 
   db:
     build: ./mysql
     stdin_open: true
     command: --innodb-use-native-aio=0
     container_name: db
+    image: brito/app-db-mysql:latest
     restart: always
     tty: true
     volumes:
-      - ./mysql/mysql_data:/var/lib/mysql      
+      - ./mysql-data:/var/lib/mysql
     environment:
       - MYSQL_DATABASE=nodedb
       - MYSQL_ROOT_PASSWORD=root
